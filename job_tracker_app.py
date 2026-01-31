@@ -1,27 +1,25 @@
+# --- Google Sheets Setup ---
 import streamlit as st
 import gspread
-from google.oauth2.service_account import Credentials
+from oauth2client.service_account import ServiceAccountCredentials
 import pandas as pd
 from datetime import datetime
 
-# --- Google Sheets Setup ---
 scope = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
 ]
 
-creds = Credentials.from_service_account_info(
-    st.secrets["gcp_service_account"],
-    scopes=scope
+creds = ServiceAccountCredentials.from_json_keyfile_name(
+    "credentials.json", scope
 )
 
 client = gspread.authorize(creds)
-st.write("Auth success")
-st.write(creds.service_account_email)
 
 job_sheet = client.open_by_url(
-    "https://docs.google.com/spreadsheets/d/1IBiJxx_DV3-4G7A4ALSOhWXEB1SxgtAPjK0Il9bQuYs/edit?usp=sharing"
+    "https://docs.google.com/spreadsheets/d/1IBiJxx_DV3-4G7A4ALSOhWXEB1SxgtAPjK0Il9bQuYs"
 ).sheet1
+
 
 tech_sheet = client.open_by_url(
     "https://docs.google.com/spreadsheets/d/1OL7XjAEtnxDQ9-cqHZzgms6yToVD0wZOOM6eacmW5qk/edit?usp=sharing"
