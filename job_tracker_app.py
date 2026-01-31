@@ -17,8 +17,7 @@ creds = Credentials.from_service_account_info(
 
 client = gspread.authorize(creds)
 st.write("Auth success")
-st.write(client.auth.service_account_email)
-
+st.write(creds.service_account_email)
 
 job_sheet = client.open_by_url(
     "https://docs.google.com/spreadsheets/d/1IBiJxx_DV3-4G7A4ALSOhWXEB1SxgtAPjK0Il9bQuYs/edit?usp=sharing"
