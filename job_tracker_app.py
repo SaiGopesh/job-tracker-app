@@ -16,9 +16,17 @@ creds = Credentials.from_service_account_info(
 )
 
 client = gspread.authorize(creds)
+st.write("Auth success")
 
-job_sheet = client.open("job_log").sheet1
-tech_sheet = client.open("tech_log").sheet1
+
+job_sheet = client.open_by_url(
+    "https://docs.google.com/spreadsheets/d/1IBiJxx_DV3-4G7A4ALSOhWXEB1SxgtAPjK0Il9bQuYs/edit?usp=sharing"
+).sheet1
+
+tech_sheet = client.open_by_url(
+    "https://docs.google.com/spreadsheets/d/1OL7XjAEtnxDQ9-cqHZzgms6yToVD0wZOOM6eacmW5qk/edit?usp=sharing"
+).sheet1
+
 
 # Helper functions
 def append_job_log(date, platform, count):
