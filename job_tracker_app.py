@@ -354,7 +354,7 @@ elif section == "Logs":
     display_df = render_calendar(calendar_df)
 
     st.dataframe(
-    render_calendar(calendar_df).style.applymap(style_calendar_numeric, subset=None),
+    render_calendar(calendar_df).style.applymap(style_calendar, subset=None),
     use_container_width=True,
     height=350
     )
