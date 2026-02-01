@@ -364,9 +364,9 @@ elif section == "Logs":
     display_df, jobs_df = render_calendar_display(calendar_df, label_df)
 
     st.dataframe(
-    display_df.style.applymap(style_calendar_numeric, subset=None, args=()),
+    display_df.style.applymap(style_calendar_numeric),
     use_container_width=True
-    )
+    ))
 
     st.caption("🟢 Target achieved • 🔴 Target missed • Grey = outside month")
 
