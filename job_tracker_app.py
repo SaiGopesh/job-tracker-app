@@ -168,27 +168,37 @@ def get_monthly_calendar(df, year, month):
 
 def style_calendar_numeric(jobs):
     if jobs is None:
-        return "background-color: #f0f0f0; color: #999999"  # grey for outside month
+        return "background-color: #f0f0f0; color: #999999"  # grey outside month
     elif jobs >= DAILY_TARGET:
         return "background-color: #b7eb8f; color: black"  # green
     else:
         return "background-color: #ffa39e; color: black"  # red
 
+
 def render_calendar_display(calendar_df, label_df):
+    """
+    Returns:
+      - display_df: strings for Streamlit display
+      - jobs_df: numeric values for styling
+    """
     display_df = calendar_df.copy().astype("object")
-    
+    jobs_df = calendar_df.copy()  # numeric copy for styling
+
     for i in range(display_df.shape[0]):
         for j in range(display_df.shape[1]):
             jobs = calendar_df.iloc[i, j]
             day = label_df.iloc[i, j]
-            
-            # Handle NaN / None safely
-            if jobs is None or pd.isna(jobs):
+
+            # Treat NaN as None for clarity
+            if pd.isna(jobs) or jobs is None:
                 display_df.iloc[i, j] = ""  # greyed out later
+                jobs_df.iloc[i, j] = None
             else:
-                display_df.iloc[i, j] = f"{day}\n{int(jobs)} jobs"  # safe int conversion
-    
-    return display_df
+                display_df.iloc[i, j] = f"{day}\n{int(jobs)} jobs"
+                jobs_df.iloc[i, j] = int(jobs)
+
+    return display_df, jobs_df
+
 
 
 
@@ -351,11 +361,12 @@ elif section == "Logs":
     )
 
     calendar_df, label_df = get_monthly_calendar(df_jobs, year, month)
-    display_df = render_calendar_display(calendar_df, label_df)
+    display_df, jobs_df = render_calendar_display(calendar_df, label_df)
 
-    st.dataframe(display_df.style.applymap(style_calendar_numeric), use_container_width=True)
-
-
+    st.dataframe(
+    display_df.style.applymap(style_calendar_numeric, subset=None, args=()),
+    use_container_width=True
+    )
 
     st.caption("🟢 Target achieved • 🔴 Target missed • Grey = outside month")
 
