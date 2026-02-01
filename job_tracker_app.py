@@ -361,9 +361,9 @@ elif section == "Logs":
 
     styled = display_df.style.apply(
     style_calendar_row,
-    axis=1
+    axis=1,
+    subset=display_df.columns
     )
-
     st.dataframe(styled, use_container_width=True)
 
     st.caption("🟢 Target achieved • 🔴 Target missed • Grey = outside month")
