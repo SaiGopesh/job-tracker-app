@@ -191,15 +191,21 @@ def style_calendar_row(row):
             styles.append("background-color: #ffa39e; color: black")
     return styles
 
-def display_calendar(df, labels):
-    out = df.copy().astype("object")
-    for i in range(df.shape[0]):
-        for j in range(df.shape[1]):
-            if pd.isna(df.iloc[i, j]):
-                out.iloc[i, j] = ""
+def display_calendar(numeric_df, label_df):
+    out = numeric_df.copy().astype("object")
+
+    for i in range(out.shape[0]):
+        for j in range(out.shape[1]):
+            jobs = numeric_df.iloc[i, j]
+            day = label_df.iloc[i, j]
+
+            if pd.isna(jobs):
+                out.iloc[i, j] = ""  # outside month
             else:
-                out.iloc[i, j] = f"{labels.iloc[i, j]}\n{int(df.iloc[i, j])} jobs"
+                out.iloc[i, j] = f"{int(day)}\n{int(jobs)} jobs"
+
     return out
+
 
 
 def get_job_df():
