@@ -356,7 +356,7 @@ elif section == "Logs":
     display_df,jobs = render_calendar(calendar_df, label_df)
 
     st.dataframe(
-    jobs.style.applymap(style_calendar),
+    style_calendar(jobs),
     use_container_width=True,
     height=350
     )
