@@ -244,7 +244,6 @@ elif section == "Logs":
 elif section == "Calendar":
     st.header("📅 Monthly Job Tracker")
 
-    # Get job logs
     logs_df = get_job_df()
     if logs_df.empty:
         st.warning("No job logs yet!")
@@ -253,16 +252,16 @@ elif section == "Calendar":
         selected_year = st.selectbox("Select Year", options=[today.year, today.year-1, today.year-2], index=0)
         selected_month = st.selectbox("Select Month", options=list(range(1, 13)), index=today.month-1)
 
+        # Step 1: Create calendar numeric + labels
         numeric_df, label_df = get_monthly_calendar(logs_df, selected_year, selected_month)
 
-        # Normalize and convert to integer
+        # Step 2: Normalize numeric_df
         numeric_df = numeric_df.apply(pd.to_numeric, errors="coerce")
         numeric_df = numeric_df.fillna(0).astype(int)
 
-        # Build display dataframe
+        # Step 3: Build display_df (day + jobs)
         display_df = display_calendar(numeric_df, label_df)
 
-        # Apply styles
+        # Step 4: Apply styling
         styled = display_df.style.apply(style_calendar_row, axis=1)
-
         st.dataframe(styled, use_container_width=True)
