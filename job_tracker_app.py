@@ -61,25 +61,31 @@ if section == "Job Applications":
         entries = []
 
         for p in platforms:
-            custom_platform = ""
-
-            if p == "Other":
-                custom_platform = st.text_input("Enter platform name")
-
             count = st.number_input(
                 f"Jobs applied on {p}",
                 min_value=0,
                 step=1,
-                key=p
+                key=f"count_{p}"
             )
+
+            custom_platform = ""
+
+            if p == "Other":
+                custom_platform = st.text_input(
+                    "Enter platform name",
+                    key="custom_platform"
+                )
 
             entries.append((p, custom_platform, count))
 
-        if st.form_submit_button("Save Entry"):
+        submitted = st.form_submit_button("Save Entry")
+
+        if submitted:
             for p, custom_p, count in entries:
                 append_job_log(date, p, custom_p, count)
 
             st.success("✅ Job logs updated!")
+
 
 
 elif section == "Tech Learning":
@@ -92,14 +98,20 @@ elif section == "Tech Learning":
 
         source = st.selectbox(
             "Source",
-            ["YouTube", "Course", "Documentation", "Other"]
+            ["YouTube", "Course", "Documentation", "Other"],
+            key="source_select"
         )
 
         custom_source = ""
         if source == "Other":
-            custom_source = st.text_input("Enter source name")
+            custom_source = st.text_input(
+                "Enter source name",
+                key="custom_source"
+            )
 
-        if st.form_submit_button("Save Progress") and tech:
+        submitted = st.form_submit_button("Save Progress")
+
+        if submitted and tech:
             append_tech_log(date, tech, progress, source, custom_source)
             st.success("✅ Tech log updated!")
 
