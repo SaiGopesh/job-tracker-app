@@ -175,7 +175,7 @@ def get_monthly_calendar(year, month):
 def style_calendar(val):
     if val is None:
         return "background-color: #f0f0f0; color: #999999"  # grey
-    if int(val) >= DAILY_TARGET:
+    if val >= DAILY_TARGET:
         return "background-color: #b7eb8f; color: black"  # green
     else:
         return "background-color: #ffa39e; color: black"  # red
