@@ -364,8 +364,9 @@ elif section == "Logs":
     )
 
     # numeric_df: numbers only, label_df: day numbers
-    numeric_df, label_df = get_monthly_calendar(df_jobs, year, month)
     numeric_df = numeric_df.apply(pd.to_numeric, errors="coerce")
+    numeric_df = numeric_df.fillna(0).astype(int)
+
     display_df = numeric_df.copy().astype("object")
 
     for i in range(display_df.shape[0]):
