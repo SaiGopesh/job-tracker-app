@@ -130,6 +130,9 @@ import pandas as pd
 import calendar
 
 def get_monthly_calendar(df, year, month):
+    import calendar
+    import pandas as pd
+
     cal = calendar.Calendar().monthdatescalendar(year, month)
 
     if not df.empty:
@@ -139,8 +142,8 @@ def get_monthly_calendar(df, year, month):
     else:
         jobs_per_day = {}
 
-    numeric_df = []
-    label_df = []
+    numeric_data = []
+    label_data = []
 
     for week in cal:
         week_jobs = []
@@ -148,38 +151,48 @@ def get_monthly_calendar(df, year, month):
         for day in week:
             week_labels.append(day.day)
             if day.month != month:
-                week_jobs.append(None)  # outside month
+                week_jobs.append(None)   # outside month
             else:
                 week_jobs.append(jobs_per_day.get(day, 0))  # missing = 0
-        numeric_df.append(week_jobs)
-        label_df.append(week_labels)
+        numeric_data.append(week_jobs)
+        label_data.append(week_labels)
 
-    numeric_df = pd.DataFrame(numeric_df, columns=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"])
-    label_df = pd.DataFrame(label_df, columns=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"])
+    cols = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    return (
+        pd.DataFrame(numeric_data, columns=cols),
+        pd.DataFrame(label_data, columns=cols),
+    )
 
-    return numeric_df, label_df
 
 
 def render_calendar_display(numeric_df, label_df):
     display_df = numeric_df.copy().astype("object")
 
-    for i in range(display_df.shape[0]):
-        for j in range(display_df.shape[1]):
-            jobs = numeric_df.iloc[i,j]
-            day = label_df.iloc[i,j]
+    for r in range(display_df.shape[0]):
+        for c in range(display_df.shape[1]):
+            jobs = numeric_df.iloc[r, c]
+            day = label_df.iloc[r, c]
+
             if jobs is None:
-                display_df.iloc[i,j] = ""  # greyed out later
+                display_df.iloc[r, c] = ""
             else:
-                display_df.iloc[i,j] = f"{day}\n{jobs} jobs"
+                display_df.iloc[r, c] = f"{day}\n{jobs} jobs"
 
     return display_df
-def style_calendar_numeric(jobs):
-    if jobs is None:
-        return "background-color: #f0f0f0; color: #999999"  # grey outside month
-    elif jobs >= DAILY_TARGET:
-        return "background-color: #b7eb8f; color: black"  # green
-    else:
-        return "background-color: #ffa39e; color: black"  # red
+
+
+
+def style_calendar_row(row):
+    styles = []
+    for jobs in row:
+        if jobs is None:
+            styles.append("background-color: #f0f0f0; color: #999")
+        elif jobs >= DAILY_TARGET:
+            styles.append("background-color: #b7eb8f; color: black")
+        else:
+            styles.append("background-color: #ffa39e; color: black")
+    return styles
+
 
 
 
@@ -347,13 +360,16 @@ elif section == "Logs":
     numeric_df, label_df = get_monthly_calendar(df_jobs, year, month)
     display_df = render_calendar_display(numeric_df, label_df)
 
-    # apply styling to numeric_df
-    styled = display_df.style.applymap(
-        lambda val, numeric=numeric_df: style_calendar_numeric(
-            numeric.iloc[display_df.index.get_loc(val.name), display_df.columns.get_loc(val.name)]
-        )
+    styled = display_df.style.apply(
+        style_calendar_row,
+        axis=1,
+        subset=display_df.columns,
+        numeric_df=numeric_df
     )
+
     st.dataframe(styled, use_container_width=True)
+    st.caption("🟢 Target achieved • 🔴 Target missed • Grey = outside month")
+
 
 
 
