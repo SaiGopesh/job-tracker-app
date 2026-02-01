@@ -172,6 +172,10 @@ def get_monthly_calendar(year, month):
     return calendar_df, label_df
 
 def style_calendar_numeric(jobs):
+    try:
+        jobs = int(jobs)  # force numeric
+    except:
+        jobs = 0
     if jobs is None or jobs == 0:
         return "background-color: #ffa39e; color: black"  # missed / red
     elif jobs >= DAILY_TARGET:
