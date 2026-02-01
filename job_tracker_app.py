@@ -176,15 +176,20 @@ def style_calendar_numeric(jobs):
 
 def render_calendar_display(calendar_df, label_df):
     display_df = calendar_df.copy().astype("object")
+    
     for i in range(display_df.shape[0]):
         for j in range(display_df.shape[1]):
             jobs = calendar_df.iloc[i, j]
             day = label_df.iloc[i, j]
-            if jobs is None:
+            
+            # Handle NaN / None safely
+            if jobs is None or pd.isna(jobs):
                 display_df.iloc[i, j] = ""  # greyed out later
             else:
-                display_df.iloc[i, j] = f"{day}\n{int(jobs)} jobs"
+                display_df.iloc[i, j] = f"{day}\n{int(jobs)} jobs"  # safe int conversion
+    
     return display_df
+
 
 
 
