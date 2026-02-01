@@ -178,23 +178,21 @@ def style_calendar(val):
         return "background-color: #b7eb8f; color: black"  # green
     else:
         return "background-color: #ffa39e; color: black"  # red
-def render_calendar(calendar_df, label_df):
-    display_df = calendar_df.copy()
-
-    for col in display_df.columns:
-        display_df[col] = display_df[col].astype("object")
+def render_calendar(calendar_df):
+    # Create display version with day + count
+    display_df = calendar_df.copy().astype("object")
 
     for i in range(display_df.shape[0]):
-        for j, col in enumerate(display_df.columns):
+        for j in range(display_df.shape[1]):
             jobs = calendar_df.iloc[i, j]
-            day = label_df.iloc[i, j]
-
             if jobs is None:
                 display_df.iloc[i, j] = ""
             else:
-                display_df.iloc[i, j] = f"{day}\n{jobs} jobs"
+                day_num = i*7 + j + 1  # just for display if you want
+                display_df.iloc[i, j] = f"{day_num}\n{jobs} jobs"
 
-    return display_df,jobs
+    return display_df
+
 
 
 
@@ -356,10 +354,11 @@ elif section == "Logs":
     display_df,jobs = render_calendar(calendar_df, label_df)
 
     st.dataframe(
-    style_calendar(jobs),
+    render_calendar(calendar_df).style.applymap(style_calendar_numeric, subset=None),
     use_container_width=True,
     height=350
     )
+
 
     st.caption("🟢 Target achieved • 🔴 Target missed • Grey = outside month")
 
