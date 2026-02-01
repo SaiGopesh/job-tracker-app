@@ -35,6 +35,88 @@ def append_job_log(date, platform, custom_platform, count):
 
 def append_tech_log(date, tech, progress, source, custom_source):
     tech_sheet.append_row([str(date), tech, progress, source, custom_source])
+DAILY_TARGET = 20
+
+def get_today_job_count(selected_date):
+    records = job_sheet.get_all_records()
+    df = pd.DataFrame(records)
+
+    if df.empty:
+        return 0
+
+    df["date"] = pd.to_datetime(df["date"]).dt.date
+    today_df = df[df["date"] == selected_date]
+
+    return today_df["count"].astype(int).sum()
+def get_daily_job_summary():
+    records = job_sheet.get_all_records()
+    df = pd.DataFrame(records)
+
+    if df.empty:
+        return df
+
+    df["date"] = pd.to_datetime(df["date"]).dt.date
+    df["count"] = df["count"].astype(int)
+
+    daily_summary = df.groupby("date")["count"].sum().reset_index()
+    return daily_summary
+def get_target_streak():
+    records = job_sheet.get_all_records()
+    df = pd.DataFrame(records)
+
+    if df.empty:
+        return 0
+
+    df["date"] = pd.to_datetime(df["date"]).dt.date
+    df["count"] = df["count"].astype(int)
+
+    daily = df.groupby("date")["count"].sum().reset_index()
+    daily = daily.sort_values("date", ascending=False)
+
+    streak = 0
+    for _, row in daily.iterrows():
+        if row["count"] >= DAILY_TARGET:
+            streak += 1
+        else:
+            break
+
+    return streak
+def get_weekly_summary():
+    records = job_sheet.get_all_records()
+    df = pd.DataFrame(records)
+
+    if df.empty:
+        return None
+
+    df["date"] = pd.to_datetime(df["date"])
+    df["count"] = df["count"].astype(int)
+
+    current_week = df["date"].dt.isocalendar().week.max()
+    week_df = df[df["date"].dt.isocalendar().week == current_week]
+
+    total = week_df["count"].sum()
+    avg = round(total / 7, 1)
+    hit_days = week_df.groupby(df["date"].dt.date)["count"].sum()
+    hit_days = (hit_days >= DAILY_TARGET).sum()
+
+    return total, avg, hit_days
+def get_weekly_report_df():
+    records = job_sheet.get_all_records()
+    df = pd.DataFrame(records)
+
+    if df.empty:
+        return df
+
+    df["date"] = pd.to_datetime(df["date"])
+    df["count"] = df["count"].astype(int)
+
+    current_week = df["date"].dt.isocalendar().week.max()
+    week_df = df[df["date"].dt.isocalendar().week == current_week]
+
+    return week_df
+
+
+
 
 def get_job_df():
     return pd.DataFrame(job_sheet.get_all_records())
@@ -82,6 +164,29 @@ if section == "Job Applications":
                 append_job_log(date, p, cp, count)
 
             st.success("✅ Job logs updated!")
+            today_total = get_today_job_count(date)
+            remaining = DAILY_TARGET - today_total
+            
+            
+            st.markdown("---")
+            st.subheader("🎯 Daily Progress")
+            
+            st.write(f"✅ Jobs applied today: **{today_total}** / {DAILY_TARGET}")
+            progress_pct = min(today_total / DAILY_TARGET, 1.0)
+            st.progress(progress_pct)
+            st.caption(f"{int(progress_pct * 100)}% of daily target completed")
+            if remaining > 0:
+                st.info(f"💪 {remaining} jobs left to reach today’s target!")
+            else:
+                st.success("🎉 Congratulations! You’ve reached today’s job application target!")
+                streak = get_target_streak()
+                if streak > 0:
+                    st.success(f"🔥 Current streak: {streak} day(s) hitting your target!")
+                else:
+                    st.info("No active streak yet — today can be Day 1 💪")
+
+            
+
 
 
 
@@ -111,7 +216,45 @@ elif section == "Tech Learning":
 
 elif section == "Logs":
     st.header("📊 Logs Overview")
-    st.subheader("Jobs")
+
+    st.subheader("📈 Daily Job Application Trend")
+    daily_df = get_daily_job_summary()
+
+    if not daily_df.empty:
+        st.line_chart(
+            daily_df.set_index("date")["count"]
+        )
+    else:
+        st.info("No job application data yet.")
+
+    st.markdown("---")
+
+    st.subheader("📋 Job Logs")
     st.dataframe(get_job_df())
-    st.subheader("Tech Learning")
+
+    st.subheader("📚 Tech Learning Logs")
     st.dataframe(get_tech_df())
+    summary = get_weekly_summary()
+
+    if summary:
+        total, avg, hit_days = summary
+
+        st.subheader("📆 Weekly Summary")
+        col1, col2, col3 = st.columns(3)
+
+        col1.metric("Total Jobs", total)
+        col2.metric("Daily Average", avg)
+        col3.metric("Target Hit Days", hit_days)
+    weekly_df = get_weekly_report_df()
+    if not weekly_df.empty:
+        csv = weekly_df.to_csv(index=False).encode("utf-8")
+
+        st.download_button(
+            label="⬇️ Download Weekly Report (CSV)",
+            data=csv,
+            file_name="weekly_job_report.csv",
+            mime="text/csv"
+        )
+
+
+
