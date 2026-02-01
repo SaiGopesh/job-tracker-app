@@ -171,13 +171,14 @@ def get_monthly_calendar(year, month):
 
     return calendar_df, label_df
 
-def style_calendar(val):
-    if val is None:
-        return "background-color: #f0f0f0; color: #999999"  # grey
-    if val >= DAILY_TARGET:
+def style_calendar_numeric(jobs):
+    if jobs is None or jobs == 0:
+        return "background-color: #ffa39e; color: black"  # missed / red
+    elif jobs >= DAILY_TARGET:
         return "background-color: #b7eb8f; color: black"  # green
     else:
         return "background-color: #ffa39e; color: black"  # red
+
 def render_calendar(calendar_df):
     # Create display version with day + count
     display_df = calendar_df.copy().astype("object")
@@ -354,10 +355,11 @@ elif section == "Logs":
     display_df = render_calendar(calendar_df)
 
     st.dataframe(
-    render_calendar(calendar_df).style.applymap(style_calendar, subset=None),
+    render_calendar(calendar_df).style.applymap(style_calendar_numeric, subset=None),
     use_container_width=True,
     height=350
     )
+
 
 
     st.caption("🟢 Target achieved • 🔴 Target missed • Grey = outside month")
