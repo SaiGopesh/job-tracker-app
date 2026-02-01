@@ -195,7 +195,7 @@ def render_calendar(calendar_df, label_df):
             else:
                 display_df.iloc[i, j] = f"{day}\n{jobs} jobs"
 
-    return display_df
+    return display_df,jobs
 
 
 
@@ -354,10 +354,10 @@ elif section == "Logs":
     )
 
     calendar_df, label_df = get_monthly_calendar(year, month)
-    display_df = render_calendar(calendar_df, label_df)
+    display_df,jobs = render_calendar(calendar_df, label_df)
 
     st.dataframe(
-    display_df.style.applymap(style_calendar),
+    display_df.jobs.style.applymap(style_calendar),
     use_container_width=True,
     height=350
     )
