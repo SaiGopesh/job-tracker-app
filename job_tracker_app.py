@@ -206,18 +206,6 @@ def display_calendar(numeric_df, label_df):
 
     return out
 
-display_df = numeric_df.copy().astype("object")
-
-for i in range(display_df.shape[0]):
-    for j in range(display_df.shape[1]):
-        jobs = numeric_df.iloc[i, j]
-        day = label_df.iloc[i, j]
-
-        if pd.isna(jobs):
-            display_df.iloc[i, j] = ""
-        else:
-            display_df.iloc[i, j] = f"{int(day)}\n{int(jobs)} jobs"
-
 
 def get_job_df():
     return pd.DataFrame(job_sheet.get_all_records())
@@ -378,8 +366,21 @@ elif section == "Logs":
     # numeric_df: numbers only, label_df: day numbers
     numeric_df, label_df = get_monthly_calendar(df_jobs, year, month)
     numeric_df = numeric_df.apply(pd.to_numeric, errors="coerce")
+    display_df = numeric_df.copy().astype("object")
 
-    display_df = render_calendar_display(numeric_df, label_df)
+    for i in range(display_df.shape[0]):
+        for j in range(display_df.shape[1]):
+            jobs = numeric_df.iloc[i, j]
+            day = label_df.iloc[i, j]
+
+            if pd.isna(jobs):
+                display_df.iloc[i, j] = ""
+            else:
+                display_df.iloc[i, j] = f"{int(day)}\n{int(jobs)} jobs"
+
+
+
+    #display_df = render_calendar_display(numeric_df, label_df)
 
     styled = numeric_df.style.apply(style_calendar_row, axis=1)
     styled._data = display_calendar(numeric_df, label_df)
