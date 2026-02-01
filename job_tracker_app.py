@@ -128,6 +128,7 @@ def get_weekly_report_df():
 
     return week_df
 import calendar
+from datetime import date
 
 def get_monthly_calendar(year, month):
     records = job_sheet.get_all_records()
@@ -144,29 +145,55 @@ def get_monthly_calendar(year, month):
     cal = calendar.Calendar().monthdatescalendar(year, month)
 
     calendar_data = []
+    date_labels = []
+
     for week in cal:
         row = []
+        label_row = []
         for day in week:
+            label_row.append(day.day)
+
             if day.month != month:
                 row.append(None)
             else:
-                total = daily.get(day, None)
-                row.append(total)
+                row.append(daily.get(day, 0))  # 👈 missing days = 0
         calendar_data.append(row)
+        date_labels.append(label_row)
 
     calendar_df = pd.DataFrame(
         calendar_data,
         columns=["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     )
 
-    return calendar_df
+    label_df = pd.DataFrame(
+        date_labels,
+        columns=["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    )
+
+    return calendar_df, label_df
+
 def style_calendar(val):
-    if pd.isna(val):
-        return ""
     if val >= DAILY_TARGET:
         return "background-color: #b7eb8f; color: black"  # green
     else:
         return "background-color: #ffa39e; color: black"  # red
+def render_calendar(calendar_df, label_df):
+    display_df = calendar_df.copy()
+
+    for col in display_df.columns:
+        display_df[col] = display_df[col].astype("object")
+
+    for i in range(display_df.shape[0]):
+        for j, col in enumerate(display_df.columns):
+            jobs = calendar_df.iloc[i, j]
+            day = label_df.iloc[i, j]
+
+            if jobs is None:
+                display_df.iloc[i, j] = ""
+            else:
+                display_df.iloc[i, j] = f"{day}\n{jobs} jobs"
+
+    return display_df
 
 
 
@@ -320,17 +347,20 @@ elif section == "Logs":
     month = col2.selectbox(
     "Month",
     list(range(1, 13)),
+    format_func=lambda x: calendar.month_name[x],
     index=today.month - 1
     )
 
-    calendar_df = get_monthly_calendar(year, month)
+    calendar_df, label_df = get_monthly_calendar(year, month)
+    display_df = render_calendar(calendar_df, label_df)
 
     st.dataframe(
-    calendar_df.style.applymap(style_calendar),
-    use_container_width=True
+    display_df.style.applymap(style_calendar),
+    use_container_width=True,
+    height=350
     )
 
-    st.caption("🟢 Target achieved • 🔴 Target missed")
+    st.caption("🟢 Target achieved • 🔴 Target missed • Grey = outside month")
 
 
 
