@@ -366,7 +366,7 @@ elif section == "Logs":
     st.dataframe(
     display_df.style.applymap(style_calendar_numeric),
     use_container_width=True
-    ))
+    )
 
     st.caption("🟢 Target achieved • 🔴 Target missed • Grey = outside month")
 
