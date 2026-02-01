@@ -126,26 +126,21 @@ def get_weekly_report_df():
     week_df = df[df["date"].dt.isocalendar().week == current_week]
 
     return week_df
+import pandas as pd
 import calendar
-from datetime import date
 
 def get_monthly_calendar(df, year, month):
-    """
-    Returns calendar dataframe with job counts and a label dataframe with day numbers.
-    df: dataframe with columns ['date', 'count']
-    """
     cal = calendar.Calendar().monthdatescalendar(year, month)
 
-    calendar_data = []
-    day_labels = []
-
-    # Group jobs by date
     if not df.empty:
         df["date"] = pd.to_datetime(df["date"]).dt.date
         df["count"] = df["count"].astype(int)
         jobs_per_day = df.groupby("date")["count"].sum()
     else:
         jobs_per_day = {}
+
+    numeric_df = []
+    label_df = []
 
     for week in cal:
         week_jobs = []
@@ -155,17 +150,29 @@ def get_monthly_calendar(df, year, month):
             if day.month != month:
                 week_jobs.append(None)  # outside month
             else:
-                week_jobs.append(jobs_per_day.get(day, 0))  # missing days = 0
-        calendar_data.append(week_jobs)
-        day_labels.append(week_labels)
+                week_jobs.append(jobs_per_day.get(day, 0))  # missing = 0
+        numeric_df.append(week_jobs)
+        label_df.append(week_labels)
 
-    calendar_df = pd.DataFrame(
-        calendar_data, columns=["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-    )
-    label_df = pd.DataFrame(day_labels, columns=["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])
+    numeric_df = pd.DataFrame(numeric_df, columns=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"])
+    label_df = pd.DataFrame(label_df, columns=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"])
 
-    return calendar_df, label_df
+    return numeric_df, label_df
 
+
+def render_calendar_display(numeric_df, label_df):
+    display_df = numeric_df.copy().astype("object")
+
+    for i in range(display_df.shape[0]):
+        for j in range(display_df.shape[1]):
+            jobs = numeric_df.iloc[i,j]
+            day = label_df.iloc[i,j]
+            if jobs is None:
+                display_df.iloc[i,j] = ""  # greyed out later
+            else:
+                display_df.iloc[i,j] = f"{day}\n{jobs} jobs"
+
+    return display_df
 def style_calendar_numeric(jobs):
     if jobs is None:
         return "background-color: #f0f0f0; color: #999999"  # grey outside month
@@ -174,30 +181,6 @@ def style_calendar_numeric(jobs):
     else:
         return "background-color: #ffa39e; color: black"  # red
 
-
-def render_calendar_display(calendar_df, label_df):
-    """
-    Returns:
-      - display_df: strings for Streamlit display
-      - jobs_df: numeric values for styling
-    """
-    display_df = calendar_df.copy().astype("object")
-    jobs_df = calendar_df.copy()  # numeric copy for styling
-
-    for i in range(display_df.shape[0]):
-        for j in range(display_df.shape[1]):
-            jobs = calendar_df.iloc[i, j]
-            day = label_df.iloc[i, j]
-
-            # Treat NaN as None for clarity
-            if pd.isna(jobs) or jobs is None:
-                display_df.iloc[i, j] = ""  # greyed out later
-                jobs_df.iloc[i, j] = None
-            else:
-                display_df.iloc[i, j] = f"{day}\n{int(jobs)} jobs"
-                jobs_df.iloc[i, j] = int(jobs)
-
-    return display_df, jobs_df
 
 
 
@@ -360,15 +343,18 @@ elif section == "Logs":
     index=today.month - 1
     )
 
-    calendar_df, label_df = get_monthly_calendar(df_jobs, year, month)
-    display_df, jobs_df = render_calendar_display(calendar_df, label_df)
+    # numeric_df: numbers only, label_df: day numbers
+    numeric_df, label_df = get_monthly_calendar(df_jobs, year, month)
+    display_df = render_calendar_display(numeric_df, label_df)
 
-    st.dataframe(
-    display_df.style.applymap(style_calendar_numeric),
-    use_container_width=True
+    # apply styling to numeric_df
+    styled = display_df.style.applymap(
+        lambda val, numeric=numeric_df: style_calendar_numeric(
+            numeric.iloc[display_df.index.get_loc(val.name), display_df.columns.get_loc(val.name)]
+        )
     )
+    st.dataframe(styled, use_container_width=True)
 
-    st.caption("🟢 Target achieved • 🔴 Target missed • Grey = outside month")
 
 
 
