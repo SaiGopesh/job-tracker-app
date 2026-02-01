@@ -173,6 +173,8 @@ def get_monthly_calendar(year, month):
     return calendar_df, label_df
 
 def style_calendar(val):
+    if val is None:
+        return "background-color: #f0f0f0; color: #999999"  # grey
     if val >= DAILY_TARGET:
         return "background-color: #b7eb8f; color: black"  # green
     else:
