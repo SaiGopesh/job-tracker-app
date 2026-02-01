@@ -206,6 +206,17 @@ def display_calendar(numeric_df, label_df):
 
     return out
 
+display_df = numeric_df.copy().astype("object")
+
+for i in range(display_df.shape[0]):
+    for j in range(display_df.shape[1]):
+        jobs = numeric_df.iloc[i, j]
+        day = label_df.iloc[i, j]
+
+        if pd.isna(jobs):
+            display_df.iloc[i, j] = ""
+        else:
+            display_df.iloc[i, j] = f"{int(day)}\n{int(jobs)} jobs"
 
 
 def get_job_df():
