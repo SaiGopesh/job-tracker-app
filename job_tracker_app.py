@@ -183,20 +183,13 @@ def render_calendar_display(numeric_df, label_df):
 def style_calendar_row(row):
     styles = []
     for jobs in row:
-        if jobs is None:
-            styles.append("background-color: #f0f0f0; color: #999999")  # outside month
+        if pd.isna(jobs):
+            styles.append("background-color: #f0f0f0; color: #999999")
         elif jobs >= DAILY_TARGET:
-            styles.append("background-color: #b7eb8f; color: black")   # target hit
+            styles.append("background-color: #b7eb8f; color: black")
         else:
-            styles.append("background-color: #ffa39e; color: black")   # missed
+            styles.append("background-color: #ffa39e; color: black")
     return styles
-
-
-
-
-
-
-
 
 
 def get_job_df():
@@ -357,14 +350,18 @@ elif section == "Logs":
 
     # numeric_df: numbers only, label_df: day numbers
     numeric_df, label_df = get_monthly_calendar(df_jobs, year, month)
+    numeric_df = numeric_df.apply(pd.to_numeric, errors="coerce")
     display_df = render_calendar_display(numeric_df, label_df)
 
-    styled = display_df.style.apply(
-    style_calendar_row,
-    axis=1,
-    subset=display_df.columns
+    styled = (
+    numeric_df
+        .style
+        .apply(style_calendar_row, axis=1)
+        .format(display_df)
     )
+
     st.dataframe(styled, use_container_width=True)
+
 
     st.caption("🟢 Target achieved • 🔴 Target missed • Grey = outside month")
 
