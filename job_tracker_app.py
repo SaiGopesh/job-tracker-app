@@ -351,7 +351,7 @@ elif section == "Logs":
     )
 
     calendar_df, label_df = get_monthly_calendar(year, month)
-    display_df,jobs = render_calendar(calendar_df, label_df)
+    display_df = render_calendar(calendar_df, label_df)
 
     st.dataframe(
     render_calendar(calendar_df).style.applymap(style_calendar_numeric, subset=None),
