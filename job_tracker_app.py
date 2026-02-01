@@ -127,6 +127,46 @@ def get_weekly_report_df():
     week_df = df[df["date"].dt.isocalendar().week == current_week]
 
     return week_df
+import calendar
+
+def get_monthly_calendar(year, month):
+    records = job_sheet.get_all_records()
+    df = pd.DataFrame(records)
+
+    if df.empty:
+        df = pd.DataFrame(columns=["date", "count"])
+
+    df["date"] = pd.to_datetime(df["date"]).dt.date
+    df["count"] = df["count"].astype(int)
+
+    daily = df.groupby("date")["count"].sum()
+
+    cal = calendar.Calendar().monthdatescalendar(year, month)
+
+    calendar_data = []
+    for week in cal:
+        row = []
+        for day in week:
+            if day.month != month:
+                row.append(None)
+            else:
+                total = daily.get(day, None)
+                row.append(total)
+        calendar_data.append(row)
+
+    calendar_df = pd.DataFrame(
+        calendar_data,
+        columns=["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    )
+
+    return calendar_df
+def style_calendar(val):
+    if pd.isna(val):
+        return ""
+    if val >= DAILY_TARGET:
+        return "background-color: #b7eb8f; color: black"  # green
+    else:
+        return "background-color: #ffa39e; color: black"  # red
 
 
 
@@ -268,6 +308,30 @@ elif section == "Logs":
             file_name="weekly_job_report.csv",
             mime="text/csv"
         )
+    from datetime import date
+
+    st.markdown("---")
+    st.subheader("📅 Monthly Target Calendar")
+
+    today = date.today()
+
+    col1, col2 = st.columns(2)
+    year = col1.selectbox("Year", [today.year - 1, today.year, today.year + 1], index=1)
+    month = col2.selectbox(
+    "Month",
+    list(range(1, 13)),
+    index=today.month - 1
+    )
+
+    calendar_df = get_monthly_calendar(year, month)
+
+    st.dataframe(
+    calendar_df.style.applymap(style_calendar),
+    use_container_width=True
+    )
+
+    st.caption("🟢 Target achieved • 🔴 Target missed")
+
 
 
 
