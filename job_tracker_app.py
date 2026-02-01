@@ -129,75 +129,62 @@ def get_weekly_report_df():
 import calendar
 from datetime import date
 
-def get_monthly_calendar(year, month):
-    records = job_sheet.get_all_records()
-    df = pd.DataFrame(records)
-
-    if df.empty:
-        df = pd.DataFrame(columns=["date", "count"])
-
-    df["date"] = pd.to_datetime(df["date"]).dt.date
-    df["count"] = df["count"].astype(int)
-
-    daily = df.groupby("date")["count"].sum()
-
+def get_monthly_calendar(df, year, month):
+    """
+    Returns calendar dataframe with job counts and a label dataframe with day numbers.
+    df: dataframe with columns ['date', 'count']
+    """
     cal = calendar.Calendar().monthdatescalendar(year, month)
 
     calendar_data = []
-    date_labels = []
+    day_labels = []
+
+    # Group jobs by date
+    if not df.empty:
+        df["date"] = pd.to_datetime(df["date"]).dt.date
+        df["count"] = df["count"].astype(int)
+        jobs_per_day = df.groupby("date")["count"].sum()
+    else:
+        jobs_per_day = {}
 
     for week in cal:
-        row = []
-        label_row = []
+        week_jobs = []
+        week_labels = []
         for day in week:
-            label_row.append(day.day)
-
+            week_labels.append(day.day)
             if day.month != month:
-                row.append(None)
+                week_jobs.append(None)  # outside month
             else:
-                row.append(daily.get(day, 0))  # 👈 missing days = 0
-        calendar_data.append(row)
-        date_labels.append(label_row)
+                week_jobs.append(jobs_per_day.get(day, 0))  # missing days = 0
+        calendar_data.append(week_jobs)
+        day_labels.append(week_labels)
 
     calendar_df = pd.DataFrame(
-        calendar_data,
-        columns=["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        calendar_data, columns=["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
     )
-
-    label_df = pd.DataFrame(
-        date_labels,
-        columns=["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-    )
+    label_df = pd.DataFrame(day_labels, columns=["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"])
 
     return calendar_df, label_df
 
 def style_calendar_numeric(jobs):
-    try:
-        jobs = int(jobs)  # force numeric
-    except:
-        jobs = 0
-    if jobs is None or jobs == 0:
-        return "background-color: #ffa39e; color: black"  # missed / red
+    if jobs is None:
+        return "background-color: #f0f0f0; color: #999999"  # grey for outside month
     elif jobs >= DAILY_TARGET:
         return "background-color: #b7eb8f; color: black"  # green
     else:
         return "background-color: #ffa39e; color: black"  # red
 
-def render_calendar(calendar_df):
-    # Create display version with day + count
+def render_calendar_display(calendar_df, label_df):
     display_df = calendar_df.copy().astype("object")
-
     for i in range(display_df.shape[0]):
         for j in range(display_df.shape[1]):
             jobs = calendar_df.iloc[i, j]
+            day = label_df.iloc[i, j]
             if jobs is None:
-                display_df.iloc[i, j] = ""
+                display_df.iloc[i, j] = ""  # greyed out later
             else:
-                day_num = i*7 + j + 1  # just for display if you want
-                display_df.iloc[i, j] = f"{day_num}\n{jobs} jobs"
-
+                display_df.iloc[i, j] = f"{day}\n{int(jobs)} jobs"
     return display_df
-
 
 
 
@@ -340,9 +327,12 @@ elif section == "Logs":
             mime="text/csv"
         )
     from datetime import date
+    from datetime import datetime
 
     st.markdown("---")
     st.subheader("📅 Monthly Target Calendar")
+    records = job_sheet.get_all_records()
+    df_jobs = pd.DataFrame(records)
 
     today = date.today()
 
@@ -355,14 +345,10 @@ elif section == "Logs":
     index=today.month - 1
     )
 
-    calendar_df, label_df = get_monthly_calendar(year, month)
+    calendar_df, label_df = get_monthly_calendar(df_jobs, year, month)
     display_df = render_calendar(calendar_df)
 
-    st.dataframe(
-    render_calendar(calendar_df).style.applymap(style_calendar_numeric, subset=None),
-    use_container_width=True,
-    height=350
-    )
+    st.dataframe(display_df.style.applymap(style_calendar_numeric), use_container_width=True)
 
 
 
