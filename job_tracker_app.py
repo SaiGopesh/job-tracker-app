@@ -17,7 +17,6 @@ creds = Credentials.from_service_account_info(
 )
 
 client = gspread.authorize(creds)
-st.success("Auth OK")
 
 job_sheet = client.open_by_url(
     "https://docs.google.com/spreadsheets/d/1IBiJxx_DV3-4G7A4ALSOhWXEB1SxgtAPjK0Il9bQuYs"
@@ -357,7 +356,7 @@ elif section == "Logs":
     display_df,jobs = render_calendar(calendar_df, label_df)
 
     st.dataframe(
-    display_df.jobs.style.applymap(style_calendar),
+    jobs.style.applymap(style_calendar),
     use_container_width=True,
     height=350
     )
