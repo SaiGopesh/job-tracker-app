@@ -60,6 +60,8 @@ def get_daily_job_summary():
 
     daily_summary = df.groupby("date")["count"].sum().reset_index()
     return daily_summary
+from datetime import timedelta
+
 def get_target_streak():
     records = job_sheet.get_all_records()
     df = pd.DataFrame(records)
@@ -70,17 +72,28 @@ def get_target_streak():
     df["date"] = pd.to_datetime(df["date"]).dt.date
     df["count"] = df["count"].astype(int)
 
-    daily = df.groupby("date")["count"].sum().reset_index()
-    daily = daily.sort_values("date", ascending=False)
+    daily = (
+        df.groupby("date")["count"]
+        .sum()
+        .reset_index()
+        .sort_values("date", ascending=False)
+    )
 
     streak = 0
+    expected_date = daily.iloc[0]["date"]  # most recent date
+
     for _, row in daily.iterrows():
+        if row["date"] != expected_date:
+            break  # ❌ missed a day → streak broken
+
         if row["count"] >= DAILY_TARGET:
             streak += 1
+            expected_date -= timedelta(days=1)
         else:
-            break
+            break  # ❌ target not met → streak broken
 
     return streak
+
 def get_weekly_summary():
     records = job_sheet.get_all_records()
     df = pd.DataFrame(records)
