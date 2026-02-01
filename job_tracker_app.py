@@ -191,6 +191,16 @@ def style_calendar_row(row):
             styles.append("background-color: #ffa39e; color: black")
     return styles
 
+def display_calendar(df, labels):
+    out = df.copy().astype("object")
+    for i in range(df.shape[0]):
+        for j in range(df.shape[1]):
+            if pd.isna(df.iloc[i, j]):
+                out.iloc[i, j] = ""
+            else:
+                out.iloc[i, j] = f"{labels.iloc[i, j]}\n{int(df.iloc[i, j])} jobs"
+    return out
+
 
 def get_job_df():
     return pd.DataFrame(job_sheet.get_all_records())
@@ -351,16 +361,14 @@ elif section == "Logs":
     # numeric_df: numbers only, label_df: day numbers
     numeric_df, label_df = get_monthly_calendar(df_jobs, year, month)
     numeric_df = numeric_df.apply(pd.to_numeric, errors="coerce")
+
     display_df = render_calendar_display(numeric_df, label_df)
 
-    styled = (
-    numeric_df
-        .style
-        .apply(style_calendar_row, axis=1)
-        .format(display_df)
-    )
+    styled = numeric_df.style.apply(style_calendar_row, axis=1)
+    styled._data = display_calendar(numeric_df, label_df)
 
     st.dataframe(styled, use_container_width=True)
+
 
 
     st.caption("🟢 Target achieved • 🔴 Target missed • Grey = outside month")
