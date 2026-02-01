@@ -18,7 +18,6 @@ creds = Credentials.from_service_account_info(
 
 client = gspread.authorize(creds)
 st.success("Auth OK")
-st.write(job_sheet.get_all_records())
 
 job_sheet = client.open_by_url(
     "https://docs.google.com/spreadsheets/d/1IBiJxx_DV3-4G7A4ALSOhWXEB1SxgtAPjK0Il9bQuYs"
