@@ -49,15 +49,19 @@ section = st.sidebar.radio("Go to", ["Job Applications", "Tech Learning", "Logs"
 if section == "Job Applications":
     st.header("💼 Job Application Tracker")
 
+    date = st.date_input("Date", value=datetime.today())
+
+    platforms = st.multiselect(
+        "Select Platforms",
+        ["LinkedIn", "JobTeaser", "Ehub", "Other"],
+        default=["LinkedIn"]
+    )
+
+    custom_platform = ""
+    if "Other" in platforms:
+        custom_platform = st.text_input("Enter platform name")
+
     with st.form("job_form"):
-        date = st.date_input("Date", value=datetime.today())
-
-        platforms = st.multiselect(
-            "Select Platforms",
-            ["LinkedIn", "JobTeaser", "Ehub", "Other"],
-            default=["LinkedIn"]
-        )
-
         entries = []
 
         for p in platforms:
@@ -68,21 +72,14 @@ if section == "Job Applications":
                 key=f"count_{p}"
             )
 
-            custom_platform = ""
-
-            if p == "Other":
-                custom_platform = st.text_input(
-                    "Enter platform name",
-                    key="custom_platform"
-                )
-
-            entries.append((p, custom_platform, count))
+            cp = custom_platform if p == "Other" else ""
+            entries.append((p, cp, count))
 
         submitted = st.form_submit_button("Save Entry")
 
         if submitted:
-            for p, custom_p, count in entries:
-                append_job_log(date, p, custom_p, count)
+            for p, cp, count in entries:
+                append_job_log(date, p, cp, count)
 
             st.success("✅ Job logs updated!")
 
@@ -91,24 +88,20 @@ if section == "Job Applications":
 elif section == "Tech Learning":
     st.header("📚 Technology Learning Tracker")
 
+    date = st.date_input("Date", value=datetime.today())
+    tech = st.text_input("Technology Name")
+    progress = st.text_input("Progress")
+
+    source = st.selectbox(
+        "Source",
+        ["YouTube", "Course", "Documentation", "Other"]
+    )
+
+    custom_source = ""
+    if source == "Other":
+        custom_source = st.text_input("Enter source name")
+
     with st.form("tech_form"):
-        date = st.date_input("Date", value=datetime.today())
-        tech = st.text_input("Technology Name")
-        progress = st.text_input("Progress")
-
-        source = st.selectbox(
-            "Source",
-            ["YouTube", "Course", "Documentation", "Other"],
-            key="source_select"
-        )
-
-        custom_source = ""
-        if source == "Other":
-            custom_source = st.text_input(
-                "Enter source name",
-                key="custom_source"
-            )
-
         submitted = st.form_submit_button("Save Progress")
 
         if submitted and tech:
